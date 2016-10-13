@@ -45,14 +45,8 @@ check_prerequisites() {
     
     # Check if -v /nonexistantfolder:Z works
     # A workaround is to remove --selinux-enabled option in /etc/sysconfig/docker
-    docker create --name openchetest -v /tmp/nonexistingfolder:/tmp:Z docker.io/busybox sh >/dev/null 2>&1 || { echo >&2 "Command 'docker create -v /tmp/nonexistingfolder:/tmp:Z busybox sh' failed. Che won't be able to create workspaces in this conditions. A workaround is to deactivate Docker SELinux option. Aborting."; exit 1; }
+    docker create --name openchetest -v /tmp/nonexistingfolder:/tmp:Z docker.io/busybox sh >/dev/null 2>&1 || { echo >&2 "Command 'docker create -v /tmp/nonexistingfolder:/tmp:Z busybox sh' failed. Che won't be able to create workspaces in this conditions. To solve this you can either install the latest docker version or deactivate Docker SELinux option. Aborting."; exit 1; }
     docker rm openchetest >/dev/null 2>&1
-    rmdir /tmp/nonexistingfolder >/dev/null 2>&1
-}
-
-template_already_exists() {
-    TEMPLATE_NAME=${1}
-    oc get template eclipse-che | grep eclipse-chel | wc -l
 }
 
 ## Get latest version of the template from git repository and install it
