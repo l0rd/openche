@@ -5,14 +5,11 @@ Scripts, patchs and templates to run Eclipse Che on OpenShift
 
 1. Get the [atomic developer bundle](https://github.com/projectatomic/adb-atomic-developer-bundle#how-do-i-install-and-run-adb)
 2. Start ADB and open a shell
-
 ```sh
 vagrant up
 vagrant ssh
 ```
-
 3. Get the latest docker package and replace the older one
-
 ```sh
 # Stop Docker and OpenShift
 sudo systemctl stop openshift
@@ -32,7 +29,6 @@ sudo systemctl enable docker-latest
 sudo systemctl start openshift
 ```
 4. Configure OpenShift
-
 ```sh
 # Create OpenShift project ##
 oc login -u openshift-dev
@@ -43,9 +39,7 @@ oc login -u system:admin
 oc create serviceaccount cheserviceaccount
 oadm policy add-scc-to-user privileged -z cheserviceaccount
 ```
-
 5. Deploy Che
-
 ```sh
 # Get the script from github
 git clone https://github.com/l0rd/openche
