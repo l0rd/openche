@@ -12,7 +12,7 @@ vagrant up
 vagrant ssh
 ```
 
-3\. Get the latest docker package and replace the older one
+3\. Get docker-latest (v.1.12.1) and disable older docker (v1.10.3)
 
 ```sh
 # Stop Docker and OpenShift
@@ -36,12 +36,12 @@ sudo systemctl start openshift
 4\. Configure OpenShift
 
 ```sh
-# Create OpenShift project ##
+# Create OpenShift project
 oc login -u openshift-dev
 oc new-project eclipse-che
 
-# Create a serviceaccount with privileged scc ##
-oc login -u system:admin
+# Create a serviceaccount with privileged scc
+oc login -u admin
 oc create serviceaccount cheserviceaccount
 oadm policy add-scc-to-user privileged -z cheserviceaccount
 ```
@@ -55,3 +55,4 @@ git clone https://github.com/l0rd/openche
 cd openche
 ./openche.sh deploy
 ```
+Once the pod is successfully started Che dashboard should be now available at http://che.openshift.adb/
