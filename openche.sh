@@ -1,26 +1,30 @@
 #!/bin/sh
-
-#### Example of Openshift Setup using container version of OpenShift
-#  
-## Start OpenShift Origin as a container ##
+#
+# This script allow to deploy/delete Che on OpenShift. 
+# To run it:
+#     ./openche.sh [deploy|delete]
+#
+# Before running the script OpenShift should be configured properly:
+#
+# 1. Run OpenShift
+# ----------------
+# If we don't have a running OpenShift instance we can start it as a container:
 # docker run -d --name "origin" \
 #         --privileged --pid=host --net=host \
 #         -v /:/rootfs:ro -v /var/run:/var/run:rw -v /sys:/sys -v /var/lib/docker:/var/lib/docker:rw \
 #         -v /var/lib/origin/openshift.local.volumes:/var/lib/origin/openshift.local.volumes \
 #         openshift/origin start
 #
-## Create OpenShift project ##
+# 2. Create an OpenShift project
+# ------------------------------
 # oc login -u mario
 # oc new-project openche
 #
-## Create a serviceaccount with privileged scc ##
+# 3. Create a serviceaccount with privileged scc
+# -------------------------------------------------
 # oc login -u system:admin
 # oc create serviceaccount cheserviceaccount
 # oadm policy add-scc-to-user privileged -z cheserviceaccount
-
-## Get the template definition and creates it
-# If the template already exists use oc replace instead:
-# oc replace -f che-template.json 
 
 set_parameters() {
     DEFAULT_CHE_HOSTNAME=che.openshift.adb
