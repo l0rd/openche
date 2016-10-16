@@ -19,7 +19,7 @@ sudo systemctl stop openshift
 sudo systemctl stop docker
 sudo systemctl disable docker
 # Get docker-latest
-sudo yum install docker-latest
+sudo yum install -y docker-latest
 # Update OpenShift service config
 sudo sed -i.orig -e "s/^After=.*/After=docker-latest.service/g" /usr/lib/systemd/system/openshift.service
 sudo sed -i.orig -e "s/^Requires=.*/Requires=docker-latest.service/g" /usr/lib/systemd/system/openshift.service
@@ -36,11 +36,11 @@ sudo systemctl start openshift
 
 ```sh
 # Create OpenShift project
-oc login -u openshift-dev
+oc login -u openshift-dev -p devel
 oc new-project eclipse-che
 
 # Create a serviceaccount with privileged scc
-oc login -u admin
+oc login -u admin -p admin
 oc create serviceaccount cheserviceaccount
 oadm policy add-scc-to-user privileged -z cheserviceaccount
 ```
