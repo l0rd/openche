@@ -5,10 +5,9 @@ Scripts, patchs and templates to run Eclipse Che on OpenShift
 
 1\. Get the [atomic developer bundle](https://github.com/projectatomic/adb-atomic-developer-bundle#how-do-i-install-and-run-adb)
 
-2\. Start ADB and open a shell
+2\. Start a shell in ADB VM
 
 ```sh
-vagrant up
 vagrant ssh
 ```
 
