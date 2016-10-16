@@ -53,11 +53,14 @@ check_prerequisites() {
     docker rm openchetest >/dev/null 2>&1
 }
 
-## Get latest version of the template from git repository and install it
-download_and_install_template() {
-    TEMPLATE_URL=https://raw.githubusercontent.com/l0rd/openche/master/che.json
-    curl -sSL ${TEMPLATE_URL} > che-template.json
-    echo "${TEMPLATE_URL} downladed"
+## Intstall eclipse-che template (download the json file from github if not found locally)
+install_template() {
+    if [ ! -f ./che.json ]; then
+        echo "Template not found locally. Downloading from internet"
+        TEMPLATE_URL=https://raw.githubusercontent.com/l0rd/openche/master/che.json
+        curl -sSL ${TEMPLATE_URL} > che.json
+        echo "${TEMPLATE_URL} downladed"
+    fi
     oc create -f che-template.json >/dev/null 2>&1 || oc replace -f che-template.json >/dev/null 2>&1
     echo "Template installed"
 }
@@ -123,7 +126,7 @@ parse_command_line "$@"
 
 case ${ACTION} in
   deploy)
-    download_and_install_template
+    install_template
     deploy
   ;;
   delete)
