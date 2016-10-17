@@ -61,7 +61,7 @@ install_template() {
         curl -sSL ${TEMPLATE_URL} > che.json
         echo "${TEMPLATE_URL} downladed"
     fi
-    oc create -f che-template.json >/dev/null 2>&1 || oc replace -f che-template.json >/dev/null 2>&1
+    oc create -f che.json >/dev/null 2>&1 || oc replace -f che.json >/dev/null 2>&1
     echo "Template installed"
 }
 
