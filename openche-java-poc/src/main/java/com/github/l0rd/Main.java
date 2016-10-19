@@ -2,6 +2,7 @@ package com.github.l0rd;
 
 import com.openshift.internal.restclient.ResourceFactory;
 import com.openshift.internal.restclient.model.DeploymentConfig;
+import com.openshift.internal.restclient.model.Pod;
 import com.openshift.internal.restclient.model.Port;
 import com.openshift.internal.restclient.model.Service;
 import com.openshift.restclient.*;
@@ -130,13 +131,13 @@ public class Main {
             } else {
                 System.out.println("Deployment ended. Pod details:");
                 for (IPod pod : pods) {
-                    System.out.println("==============POD INFO===============");
-                    System.out.println(pod);
-                    System.out.println(pod.getLabels());
-                    for (IContainer c : pod.getContainers()) {
-                        System.out.println(c);
+                    if (pod.getLabels().get("deploymentConfig").equals(dc.getName())) {
+                        System.out.println("==============POD INFO===============");
+                        ModelNode containerID = ((Pod) pod).getNode().get("status").get("containerStatuses").get(0).get("containerID");
+                        System.out.println(containerID.toString().substring(10, 74));
+                        System.out.println(pod.getLabels());
+                        System.out.println("=====================================");
                     }
-                    System.out.println("=====================================");
                 }
                 return;
             }
@@ -271,21 +272,21 @@ public class Main {
     }
 
     private static void putEnvVariables(Map<String, String> envVariables) {
-        envVariables.put("CHE_LOCAL_CONF_DIR", "/mnt/che/conf");
-        envVariables.put("USER_TOKEN", "dummy_token");
-        envVariables.put("CHE_API_ENDPOINT", "http://172.17.0.3:8080/wsmaster/api");
-        envVariables.put("JAVA_OPTS", "-Xms256m -Xmx2048m -Djava.security.egd=file:/dev/./urandom");
-        envVariables.put("CHE_WORKSPACE_ID", "workspaceoqwmufi1poxj455x");
-        envVariables.put("CHE_PROJECTS_ROOT", "/projects");
-        envVariables.put("PATH", "/opt/jdk1.8.0_45/bin:/home/user/apache-maven-3.3.9/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
-        envVariables.put("MAVEN_VERSION", "3.3.9");
-        envVariables.put("JAVA_VERSION", "8u45");
-        envVariables.put("JAVA_VERSION_PREFIX", "1.8.0_45");
-        envVariables.put("TOMCAT_HOME", "/home/user/tomcat8");
-        envVariables.put("JAVA_HOME", "/opt/jdk1.8.0_45");
-        envVariables.put("M2_HOME", "/home/user/apache-maven-3.3.9");
-        envVariables.put("TERM", "xterm");
-        envVariables.put("LANG", "en_US.UTF-8");
+        envVariables.put("CHE_LOCAL_CONF_DIR","/mnt/che/conf");
+        envVariables.put("USER_TOKEN","dummy_token");
+        envVariables.put("CHE_API_ENDPOINT","http://172.17.0.3:8080/wsmaster/api");
+        envVariables.put("JAVA_OPTS","-Xms256m -Xmx2048m -Djava.security.egd=file:/dev/./urandom");
+        envVariables.put("CHE_WORKSPACE_ID","workspaceoqwmufi1poxj455x");
+        envVariables.put("CHE_PROJECTS_ROOT","/projects");
+//        envVariables.put("PATH","/opt/jdk1.8.0_45/bin:/home/user/apache-maven-3.3.9/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
+//        envVariables.put("MAVEN_VERSION","3.3.9");
+//        envVariables.put("JAVA_VERSION","8u45");
+//        envVariables.put("JAVA_VERSION_PREFIX","1.8.0_45");
+        envVariables.put("TOMCAT_HOME","/home/user/tomcat8");
+        //envVariables.put("JAVA_HOME","/opt/jdk1.8.0_45");
+        envVariables.put("M2_HOME","/home/user/apache-maven-3.3.9");
+        envVariables.put("TERM","xterm");
+        envVariables.put("LANG","en_US.UTF-8");
     }
 
     /**
