@@ -105,6 +105,7 @@ parse_command_line () {
     *)
       # unknown option
       echo "ERROR: You passed an unknown command line option."
+      exit
     ;;
   esac
 }
