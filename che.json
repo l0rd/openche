@@ -111,20 +111,6 @@
                 },
                 "triggers": [
                     {
-                        "type": "ImageChange",
-                        "imageChangeParams": {
-                            "automatic": true,
-                            "containerNames": [
-                                "${APPLICATION_NAME}"
-                            ],
-                            "from": {
-                                "kind": "ImageStreamTag",
-                                "namespace": "${IMAGE_STREAM_NAMESPACE}",
-                                "name": "${CHE_SERVER_DOCKER_IMAGE}"
-                            }
-                        }
-                    },
-                    {
                         "type": "ConfigChange"
                     }
                 ],
