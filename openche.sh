@@ -44,8 +44,9 @@ check_prerequisites() {
     # docker must be installed
     command -v docker >/dev/null 2>&1 || { echo >&2 "I require docker but it's not installed.  Aborting."; exit 1; }
     
-    # interface docker0 should exist
-    ip addr show docker0  >/dev/null 2>&1 || { echo >&2 "Bridge docker0 not found.  Aborting."; exit 1; }
+    if [ -z ${DOCKER0_IP+x} ]; then 
+      ip addr show docker0  >/dev/null 2>&1 || { echo >&2 "Bridge docker0 not found.  Aborting."; exit 1; }
+    fi
     
     # Check if -v /nonexistantfolder:Z works
     # A workaround is to remove --selinux-enabled option in /etc/sysconfig/docker
@@ -67,7 +68,9 @@ install_template() {
 
 ## Create a new app based on `eclipse_che` template and deploy it
 deploy() {
-    DOCKER0_IP=$(ip addr show docker0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
+    if [ -z ${DOCKER0_IP+x} ]; then 
+      DOCKER0_IP=$(ip addr show docker0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
+    fi
 
     oc new-app --template=eclipse-che --param=HOSTNAME_HTTP=${CHE_HOSTNAME} \
                                     --param=CHE_SERVER_DOCKER_IMAGE=${CHE_IMAGE} \
