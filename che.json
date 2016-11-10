@@ -6,13 +6,13 @@
             "description": "Application template for Eclipse Che",
             "iconClass" : "icon-che",
             "tags" : "eclipse,che,java,angular,ide",
-            "version" : "4.6.0"
+            "version" : "5.0.0"
         },
         "name": "eclipse-che"
     },
     "labels": {
         "template": "eclipse-che",
-        "xpaas" : "4.6.0"
+        "xpaas" : "5.0.0"
     },
     "parameters": [
         {
@@ -24,7 +24,7 @@
         {
             "description": "Custom hostname for http service route.  Leave blank for default hostname, e.g.: <application-name>.<project>.<default-domain-suffix>",
             "name": "HOSTNAME_HTTP",
-            "value": "",
+            "value": "che.openshift.adb",
             "required": false
         },
         {
@@ -36,7 +36,7 @@
         {
             "description": "Name of the che-server Docker image.",
             "name": "CHE_SERVER_DOCKER_IMAGE",
-            "value": "registry.centos.org/eclipse/che-server:latest",
+            "value": "codenvy/che-server:5.0.0-latest",
             "required": true
         },
         {
@@ -54,7 +54,9 @@
                 "ports": [
                     {
                         "port": 8080,
-                        "targetPort": 8080
+                        "targetPort": 8080,
+                        "protocol": "TCP",
+                        "name": "tomcat"
                     }
                 ],
                 "selector": {
@@ -88,6 +90,9 @@
                 "host": "${HOSTNAME_HTTP}",
                 "to": {
                     "name": "${APPLICATION_NAME}"
+                },
+                "port": {
+                    "targetPort": "tomcat"
                 }
             }
         },
@@ -142,7 +147,7 @@
                             {
                                 "name": "${APPLICATION_NAME}",
                                 "image": "${CHE_SERVER_DOCKER_IMAGE}",
-                                "imagePullPolicy": "Always",
+                                "imagePullPolicy": "IfNotPresent",
                                 "privileged": true,
                                 "livenessProbe": {
                                     "tcpSocket": {
