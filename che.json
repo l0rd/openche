@@ -117,10 +117,10 @@
                             "containerNames": [
                                 "${APPLICATION_NAME}"
                             ],
-                             "from": {
+                            "from": {
                                 "kind": "ImageStreamTag",
                                 "namespace": "${IMAGE_STREAM_NAMESPACE}",
-                                "name": "che-server:4.6"
+                                "name": "${CHE_SERVER_DOCKER_IMAGE}"
                             }
                         }
                     },
