@@ -23,8 +23,8 @@ public class Main {
     private static final String PROJECT_NAME = "eclipse-che";
     private static final String WORKSPACE_ID = "xxxx";
     private static final String WORKSPACE_NAME = "che-ws-" + WORKSPACE_ID;
-    //    private static final String WORKSPACE_IMAGE_NAME = "codenvy/ubuntu_jdk8";
-    private static final String WORKSPACE_IMAGE_NAME = "openshift/hello-openshift";
+    private static final String WORKSPACE_IMAGE_NAME = "codenvy/ubuntu_jdk8";
+    //private static final String WORKSPACE_IMAGE_NAME = "openshift/hello-openshift";
     //    private static final String WORKSPACE_IMAGE_NAME = "florentbenoit/che-ws-agent";
     private static final String CHE_HOSTNAME = "che.openshift.adb";
     private static final String CHE_SERVICEACCOUNT = "cheserviceaccount";
@@ -49,6 +49,11 @@ public class Main {
             return;
         }
 
+        // Create resolvconf ConfigMap
+        IConfigMap cm = createConfigMap(client, cheproject.getNamespace());
+        client.create(cm);
+        System.out.println("Created ConfigMap: " + cm);
+
         // Create che-ws service
         IService service = factory.create(VERSION, ResourceKind.SERVICE);
         ((Service) service).setNamespace(cheproject.getNamespace()); //this will be the project's namespace
@@ -65,6 +70,8 @@ public class Main {
         ports.add(PortFactory.createServicePort("port2", "TCP", 9876, 9876));
         service.setPorts(ports);
 
+        service.getLabels().put("hackathonlabel","workspaceservice");
+
         service.setSelector("deploymentConfig", (WORKSPACE_NAME + "-dc"));
         LOG.debug(String.format("Stubbing service: %s", service));
         client.create(service);
@@ -76,6 +83,7 @@ public class Main {
         dc.setReplicas(1);
         dc.setReplicaSelector("deploymentConfig", WORKSPACE_NAME + "-dc");
         dc.setServiceAccountName(CHE_SERVICEACCOUNT);
+
         Set<IPort> containerPorts = new HashSet<>();
         putPorts(containerPorts);
         Map<String, String> envVariables = new HashMap<>();
@@ -86,15 +94,19 @@ public class Main {
                 envVariables,
                 Collections.emptyList());
         dc.getContainer(WORKSPACE_NAME).setImagePullPolicy("Always");
-        Set<IVolumeMount> volumeMounts = new HashSet<>();
-//        putVolumesMount(volumeMounts);
-        dc.getContainer(WORKSPACE_NAME).setVolumeMounts(volumeMounts);
+//        ((DeploymentConfig)dc).getNode().get("spec").get("template").get("spec").get("dnsPolicy").set("Default");
+        dc = resolvConfHack((DeploymentConfig) dc);
+
+//        ((DeploymentConfig)dc).getNode().get("spec").get("template").get("spec").
+//                get("containers").get("");
+
         dc.addTrigger(DeploymentTriggerType.CONFIG_CHANGE);
 
 //        IPersistentVolume pv = new PersistentVolume(null, client, ResourcePropertiesRegistry.getInstance().get(VERSION, ResourceKind.PERSISTENT_VOLUME));
 //        IHostPathVolumeProperties volume = new HostPathVolumeProperties("/tmp/dir");
 //        pv.setPersistentVolumeProperties(volume);
 //
+
 //        IPersistentVolumeClaimVolumeSource source;
 //        source = (IPersistentVolumeClaimVolumeSource)VolumeSource.create(ModelNode.fromJSONString("{\n" +
 //                "    \"name\": \"mysource\",\n" +
@@ -108,7 +120,8 @@ public class Main {
 //        source.setReadOnly(false);
 //        dc.addVolume(source);
 
-        client.create(dc);
+        IDeploymentConfig newDc = client.create(dc);
+        System.out.println("New deploymentConfig created: " + dc);
 
 //        Map<String, String> labels = new HashMap<String, String>(){{
 //            put("name","backend");
@@ -116,7 +129,72 @@ public class Main {
 //        }};
 
         String deployerLabelKey = "openshift.io/deployer-pod-for.name";
-        for (int i = 0; i < 40; i++) {
+        IPod pod = waitAndRetrievePod(client,cheproject,dc);
+        System.out.println("Container id: " + getPodFirstContainerId(pod));
+
+//        Map<String,String> labels = new HashMap<>();
+//        labels.put("hackathonlabel","workspaceservice");
+//        List<IService> services = client.list(ResourceKind.SERVICE, cheproject.getNamespace(), Collections.emptyMap());
+//        IService currentservice = services.stream().filter(s -> s.getName().equals("che-workspace-service")).findFirst().orElse(null);
+//        if (currentservice == null) {
+//            System.out.println("Service che-workspace-service not found");
+//            return;
+//        }
+//
+//        List<ModelNode> servicePorts = ((Service)currentservice).getNode().get("spec").get("ports").asList();
+//        for (ModelNode servicePort : servicePorts) {
+//            String protocol = servicePort.get("protocol").asString();
+//            String targetPort = servicePort.get("targetPort").asString();
+//            String nodePort = servicePort.get("nodePort").asString();
+//            System.out.println(targetPort + "/" + protocol);
+//            System.out.println(nodePort);
+//        }
+//POD_ID=$(oc get pods | grep che-ws | awk '{print $1}')
+//oc delete pod/${POD_ID}
+//oc delete dc/che-ws-xxxx-dc
+//oc delete svc/che-ws-xxxx-service
+//oc delete route/che-ws-xxxx-route
+
+    }
+
+    private static DeploymentConfig resolvConfHack(DeploymentConfig dc) {
+        dc.getNode().get("spec").get("template").get("spec").get("volumes").add();
+        ModelNode dcFirstVolume = dc.getNode().get("spec").get("template").get("spec").get("volumes").get(0);
+        dcFirstVolume.get("name").set("resolv-conf");
+        dcFirstVolume.get("configMap").get("name").set("resolvconf");
+        dcFirstVolume.get("configMap").get("items").add();
+        ModelNode configMapFirstItem = dcFirstVolume.get("configMap").get("items").get(0);
+        configMapFirstItem.get("key").set("resolv.conf");
+        configMapFirstItem.get("path").set("resolv.conf");
+
+        ModelNode dcFirstContainer = dc.getNode().get("spec").get("template").get("spec").get("containers").get(0);
+        dcFirstContainer.get("volumeMounts").add();
+        ModelNode firstVolumeMount = dcFirstContainer.get("volumeMounts").get(0);
+        firstVolumeMount.get("name").set("resolv-conf");
+        firstVolumeMount.get("mountPath").set("/etc/resolv.conf");
+        firstVolumeMount.get("subPath").set("resolv-conf");
+        return dc;
+    }
+
+    private static IConfigMap createConfigMap(IClient client, String namespace) {
+        String modelJSONString = "{\n" +
+                "    \"kind\": \"ConfigMap\",\n" +
+                "    \"apiVersion\": \"v1\",\n" +
+                "    \"metadata\": {\n" +
+                "        \"name\": \"resolvconf\",\n" +
+                "        \"namespace\": \""+ namespace +"\",\n" +
+                "    },\n" +
+                "    \"data\": {\n" +
+                "        \"resolv.conf\": \"search default.svc.cluster.local svc.cluster.local cluster.local\\nnameserver 10.0.0.10\\n\"\n" +
+                "    }\n" +
+                "}\n";
+        IConfigMap configMap = new ResourceFactory(client).create(modelJSONString);
+        return configMap;
+    }
+
+    private static IPod waitAndRetrievePod(IClient client, IProject cheproject, IDeploymentConfig dc) {
+        String deployerLabelKey = "openshift.io/deployer-pod-for.name";
+        for (int i = 0; i < 60; i++) {
             try {
                 Thread.sleep(1000);                 //1000 milliseconds is one second.
             } catch (InterruptedException ex) {
@@ -132,28 +210,19 @@ public class Main {
                 System.out.println("Deployment ended. Pod details:");
                 for (IPod pod : pods) {
                     if (pod.getLabels().get("deploymentConfig").equals(dc.getName())) {
-                        System.out.println("==============POD INFO===============");
-                        ModelNode containerID = ((Pod) pod).getNode().get("status").get("containerStatuses").get(0).get("containerID");
-                        System.out.println(containerID.toString().substring(10, 74));
-                        System.out.println(pod.getLabels());
-                        System.out.println("=====================================");
+                        return pod;
                     }
                 }
-                return;
             }
         }
-
-        System.out.println("TIMEOUT");
-
-//        waitForResource(client, ResourceKind.POD, cheproject.getName(), , 5 * MILLISECONDS_PER_SECOND));
-
-//POD_ID=$(oc get pods | grep che-ws | awk '{print $1}')
-//oc delete pod/${POD_ID}
-//oc delete dc/che-ws-xxxx-dc
-//oc delete svc/che-ws-xxxx-service
-//oc delete route/che-ws-xxxx-route
-
+        throw new RuntimeException("Timeout waiting for the pod to start");
     }
+
+    private static String getPodFirstContainerId(IPod pod) {
+        ModelNode containerID = ((Pod) pod).getNode().get("status").get("containerStatuses").get(0).get("containerID");
+        return containerID.toString().substring(10, 74);
+    }
+
 
     private static void putVolumesMount(Set<IVolumeMount> volumeMounts) {
         IVolumeMount volumeMount1 = new IVolumeMount() {
