@@ -127,7 +127,6 @@
                         }
                     },
                     "spec": {
-                        "dnsPolicy": "Default",
                         "terminationGracePeriodSeconds": 75,
                         "containers": [
                             {

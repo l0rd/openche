@@ -1,10 +1,7 @@
 package com.github.l0rd;
 
 import com.openshift.internal.restclient.ResourceFactory;
-import com.openshift.internal.restclient.model.DeploymentConfig;
-import com.openshift.internal.restclient.model.Pod;
-import com.openshift.internal.restclient.model.Port;
-import com.openshift.internal.restclient.model.Service;
+import com.openshift.internal.restclient.model.*;
 import com.openshift.restclient.*;
 import com.openshift.restclient.images.DockerImageURI;
 import com.openshift.restclient.model.*;
@@ -15,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.List;
 
 public class Main {
 
@@ -23,18 +21,20 @@ public class Main {
     private static final String PROJECT_NAME = "eclipse-che";
     private static final String WORKSPACE_ID = "xxxx";
     private static final String WORKSPACE_NAME = "che-ws-" + WORKSPACE_ID;
-    private static final String WORKSPACE_IMAGE_NAME = "codenvy/ubuntu_jdk8";
+    private static final String WORKSPACE_IMAGE_NAME = "mariolet/che-ws-agent"; //"codenvy/ubuntu_jdk8";
     //private static final String WORKSPACE_IMAGE_NAME = "openshift/hello-openshift";
     //    private static final String WORKSPACE_IMAGE_NAME = "florentbenoit/che-ws-agent";
     private static final String CHE_HOSTNAME = "che.openshift.adb";
     private static final String CHE_SERVICEACCOUNT = "cheserviceaccount";
     public static final long MILLISECONDS_PER_SECOND = 1000;
+//    public static final String OPENSHIFT_API = "https://openshift.adb:8443/";
+    public static final String OPENSHIFT_API = "https://openshift.mini:8443/";
 
     public static void main(String[] args) {
         IClient client;
         IResourceFactory factory;
 
-        client = new ClientBuilder("https://openshift.adb:8443/")
+        client = new ClientBuilder(OPENSHIFT_API)
                 .withUserName("openshift-dev")
                 .withPassword("devel")
                 .build();
@@ -94,13 +94,21 @@ public class Main {
                 envVariables,
                 Collections.emptyList());
         dc.getContainer(WORKSPACE_NAME).setImagePullPolicy("Always");
+
 //        ((DeploymentConfig)dc).getNode().get("spec").get("template").get("spec").get("dnsPolicy").set("Default");
-        dc = resolvConfHack((DeploymentConfig) dc);
+//        dc = resolvConfHack((DeploymentConfig) dc);
 
 //        ((DeploymentConfig)dc).getNode().get("spec").get("template").get("spec").
 //                get("containers").get("");
 
         dc.addTrigger(DeploymentTriggerType.CONFIG_CHANGE);
+        ((DeploymentConfig)dc).getNode().get("spec").get("template").get("spec").get("securityContext").get("runAsUser").set("0");
+        ModelNode dcFirstContainer = ((DeploymentConfig)dc).getNode().get("spec").get("template").get("spec").get("containers").get(0);
+        dcFirstContainer.get("securityContext").get("privileged").set(true);
+        dcFirstContainer.get("securityContext").get("runAsUser").set("0");
+        dcFirstContainer.get("livenessProbe").get("tcpSocket").get("port").set(10);
+        dcFirstContainer.get("livenessProbe").get("initialDelaySeconds").set(10);
+        dcFirstContainer.get("livenessProbe").get("timeoutSeconds").set(1);
 
 //        IPersistentVolume pv = new PersistentVolume(null, client, ResourcePropertiesRegistry.getInstance().get(VERSION, ResourceKind.PERSISTENT_VOLUME));
 //        IHostPathVolumeProperties volume = new HostPathVolumeProperties("/tmp/dir");
@@ -122,6 +130,7 @@ public class Main {
 
         IDeploymentConfig newDc = client.create(dc);
         System.out.println("New deploymentConfig created: " + dc);
+
 
 //        Map<String, String> labels = new HashMap<String, String>(){{
 //            put("name","backend");
@@ -172,7 +181,7 @@ public class Main {
         ModelNode firstVolumeMount = dcFirstContainer.get("volumeMounts").get(0);
         firstVolumeMount.get("name").set("resolv-conf");
         firstVolumeMount.get("mountPath").set("/etc/resolv.conf");
-        firstVolumeMount.get("subPath").set("resolv-conf");
+        firstVolumeMount.get("subPath").set("resolv.conf");
         return dc;
     }
 

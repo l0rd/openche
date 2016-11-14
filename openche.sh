@@ -24,7 +24,14 @@
 # -------------------------------------------------
 # oc login -u system:admin
 # oc create serviceaccount cheserviceaccount
-# oadm policy add-scc-to-user privileged -z cheserviceaccount
+# oc adm policy add-scc-to-user privileged -z cheserviceaccount
+#
+# 4. Set the env variables (optional)
+# ------------------------------------
+# export CHE_HOSTNAME=che.openshift.mini
+# export CHE_IMAGE=codenvy/che-server:local
+# export DOCKER0_IP=$(docker run -ti --rm --net=host alpine ip addr show docker0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
+
 
 set_parameters() {
     DEFAULT_CHE_HOSTNAME=che.openshift.adb
@@ -35,6 +42,7 @@ set_parameters() {
 }
 
 check_prerequisites() {
+    echo "Checking prerequisites - start"
     # oc must be installed
     command -v oc >/dev/null 2>&1 || { echo >&2 "I require oc but it's not installed.  Aborting."; exit 1; }
 
@@ -52,10 +60,13 @@ check_prerequisites() {
     # A workaround is to remove --selinux-enabled option in /etc/sysconfig/docker
     docker create --name openchetest -v /tmp/nonexistingfolder:/tmp:Z docker.io/busybox sh >/dev/null 2>&1 || { echo >&2 "Command 'docker create -v /tmp/nonexistingfolder:/tmp:Z busybox sh' failed. Che won't be able to create workspaces in this conditions. To solve this you can either install the latest docker version or deactivate Docker SELinux option. Aborting."; exit 1; }
     docker rm openchetest >/dev/null 2>&1
+
+    echo "Checking prerequisites - end"
 }
 
 ## Intstall eclipse-che template (download the json file from github if not found locally)
 install_template() {
+    echo "Installing template - start"
     if [ ! -f ./che.json ]; then
         echo "Template not found locally. Downloading from internet"
         TEMPLATE_URL=https://raw.githubusercontent.com/l0rd/openche/master/che.json
@@ -84,11 +95,11 @@ deploy() {
 
 ## Uninstall everything
 delete() {
-    POD_ID=$(oc get pods | grep che-server | awk '{print $1}')
-    oc delete pod/${POD_ID}
-    oc delete dc/che-server
+    # POD_ID=$(oc get pods | grep che-server | awk '{print $1}')
+    # oc delete pod/${POD_ID}
     oc delete route/che-server
     oc delete svc/che-server
+    oc delete dc/che-server
 }
 
 parse_command_line () {
