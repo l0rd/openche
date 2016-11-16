@@ -4,7 +4,7 @@
     "metadata": {
         "annotations": {
             "description": "Application template for Eclipse Che",
-            "iconClass" : "icon-che",
+            "iconClass" : "icon-openjdk",
             "tags" : "eclipse,che,java,angular,ide",
             "version" : "5.0.0"
         },
@@ -24,14 +24,8 @@
         {
             "description": "Custom hostname for http service route.  Leave blank for default hostname, e.g.: <application-name>.<project>.<default-domain-suffix>",
             "name": "HOSTNAME_HTTP",
-            "value": "che.openshift.adb",
+            "value": "che.openshift.local",
             "required": false
-        },
-        {
-            "description": "Namespace in which the ImageStreams for Red Hat Middleware images are installed. These ImageStreams are normally installed in the openshift namespace. You should only need to modify this if you've installed the ImageStreams in a different namespace/project.",
-            "name": "IMAGE_STREAM_NAMESPACE",
-            "value": "openshift",
-            "required": true
         },
         {
             "description": "Name of the che-server Docker image.",
