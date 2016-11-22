@@ -36,9 +36,11 @@
 set_parameters() {
     DEFAULT_CHE_HOSTNAME=che.openshift.adb
     DEFAULT_CHE_IMAGE=codenvy/che-server:nightly
+    DEFAULT_CHE_LOG_LEVEL=DEBUG
 
     CHE_HOSTNAME=${CHE_HOSTNAME:-${DEFAULT_CHE_HOSTNAME}}
     CHE_IMAGE=${CHE_IMAGE:-${DEFAULT_CHE_IMAGE}}
+    CHE_LOG_LEVEL=${CHE_LOG_LEVEL:-${DEFAULT_CHE_LOG_LEVEL}}
 }
 
 check_prerequisites() {
@@ -85,21 +87,22 @@ deploy() {
 
     oc new-app --template=eclipse-che --param=HOSTNAME_HTTP=${CHE_HOSTNAME} \
                                     --param=CHE_SERVER_DOCKER_IMAGE=${CHE_IMAGE} \
-                                    --param=DOCKER0_BRIDGE_IP=${DOCKER0_IP}
-    oc deploy che-server --latest
+                                    --param=DOCKER0_BRIDGE_IP=${DOCKER0_IP} \
+                                    --param=CHE_LOG_LEVEL=${CHE_LOG_LEVEL}
+    oc deploy che-host --latest
     echo "OPENCHE: Waiting 5 seconds for the app to start"
     sleep 5
-    POD_ID=$(oc get pods | grep che-server | grep -v che-server-deploy | awk '{print $1}')
+    POD_ID=$(oc get pods | grep che-host | grep -v che-host-deploy | awk '{print $1}')
     echo "Che pod starting (id $POD_ID)..."
 }
 
 ## Uninstall everything
 delete() {
-    # POD_ID=$(oc get pods | grep che-server | awk '{print $1}')
+    # POD_ID=$(oc get pods | grep che-host | awk '{print $1}')
     # oc delete pod/${POD_ID}
-    oc delete route/che-server
-    oc delete svc/che-server
-    oc delete dc/che-server
+    oc delete route/che-host
+    oc delete svc/che-host
+    oc delete dc/che-host
 }
 
 parse_command_line () {
@@ -126,8 +129,8 @@ parse_command_line () {
 
 usage () {
   USAGE="Usage: ${0} [COMMAND]
-     deploy                             Install and deploys che-server Application on OpenShift
-     delete                             Delete che-server related objects from OpenShift
+     deploy                             Install and deploys che-host Application on OpenShift
+     delete                             Delete che-host related objects from OpenShift
 "
   printf "%s" "${USAGE}"
 }

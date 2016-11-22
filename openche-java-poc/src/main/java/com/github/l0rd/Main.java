@@ -50,9 +50,9 @@ public class Main {
         }
 
         // Create resolvconf ConfigMap
-        IConfigMap cm = createConfigMap(client, cheproject.getNamespace());
-        client.create(cm);
-        System.out.println("Created ConfigMap: " + cm);
+//        IConfigMap cm = createConfigMap(client, cheproject.getNamespace());
+//        client.create(cm);
+//        System.out.println("Created ConfigMap: " + cm);
 
         // Create che-ws service
         IService service = factory.create(VERSION, ResourceKind.SERVICE);
@@ -139,7 +139,18 @@ public class Main {
 
         String deployerLabelKey = "openshift.io/deployer-pod-for.name";
         IPod pod = waitAndRetrievePod(client,cheproject,dc);
-        System.out.println("Container id: " + getPodFirstContainerId(pod));
+        String containerId = getPodFirstContainerId(pod).substring(0,12);
+        System.out.println("Container id: " + containerId);
+        pod.addLabel("cheContainerIdentifier", containerId);
+        client.update(pod);
+
+        System.out.println("Removing just created resources");
+        removeOpenShiftResources(client, cheproject, containerId);
+
+        //pod.addLabel("pippo","pluto");
+        //client.update(pod);
+        //service.addLabel("pippo","pluto");
+        //client.update(service);
 
 //        Map<String,String> labels = new HashMap<>();
 //        labels.put("hackathonlabel","workspaceservice");
@@ -164,6 +175,55 @@ public class Main {
 //oc delete svc/che-ws-xxxx-service
 //oc delete route/che-ws-xxxx-route
 
+    }
+
+    private static void removeOpenShiftResources(IClient client, IProject cheproject, String containerId) {
+        Map<String, String> podLabels = new HashMap<>();
+        String labelKey = "cheContainerIdentifier";
+        podLabels.put(labelKey, containerId);
+
+        List<IPod> pods = client.list(ResourceKind.POD, cheproject.getNamespace(), podLabels);
+
+        if (pods.size() == 0 ) {
+            throw  new  RuntimeException("An error occurred: a pod with label " + labelKey + "=" + containerId+" could not be found");
+        }
+
+        if (pods.size() > 1 ) {
+            throw  new  RuntimeException("An error occurred: there are " + pods.size() + " pod with label " + labelKey + "=" + containerId+" has been found");
+        }
+
+        IPod pod = pods.get(0);
+        String deploymentConfig = pod.getLabels().get("deploymentConfig");
+        String replicationController = pod.getLabels().get("deployment");
+
+        IDeploymentConfig dc = client.get(ResourceKind.DEPLOYMENT_CONFIG, deploymentConfig, cheproject.getNamespace());
+        if (dc == null) {
+            throw  new  RuntimeException("An error occurred: there are no DeploymentConfig with name " + deploymentConfig);
+        }
+
+        IReplicationController rc = client.get(ResourceKind.REPLICATION_CONTROLLER, replicationController, cheproject.getNamespace());
+        if (rc == null) {
+            throw  new  RuntimeException("An error occurred: there are no ReplicationController with name " + replicationController);
+        }
+
+
+        List<IService> svcs = client.list(ResourceKind.SERVICE, cheproject.getNamespace(), Collections.emptyMap());
+        IService service = svcs.stream().filter(s -> s.getSelector().get("deploymentConfig").equals(deploymentConfig)).findAny().orElse(null);
+
+        if (service == null) {
+            throw  new  RuntimeException("An error occurred: there are no Services with selector deploymentConfig=" + deploymentConfig);
+        }
+
+
+        client.delete(dc);
+        client.delete(rc);
+        client.delete(pod);
+        client.delete(service);
+
+//        podLabels.clear();
+//        podLabels.put("deploymentConfig", deploymentConfig);
+//        pods = client.list(ResourceKind.POD, cheproject.getNamespace(), podLabels);
+//        pods.stream().forEach(p -> client.delete(p));
     }
 
     private static DeploymentConfig resolvConfHack(DeploymentConfig dc) {

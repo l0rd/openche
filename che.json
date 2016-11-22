@@ -18,7 +18,7 @@
         {
             "description": "The name for the application.",
             "name": "APPLICATION_NAME",
-            "value": "che-server",
+            "value": "che-host",
             "required": true
         },
         {
@@ -32,6 +32,42 @@
             "name": "CHE_SERVER_DOCKER_IMAGE",
             "value": "codenvy/che-server:5.0.0-latest",
             "required": true
+        },
+        {
+            "description": "Url of the OpenShift API",
+            "name": "CHE_OPENSHIFT_ENDPOINT",
+            "value": "https://192.168.64.2:8443/",
+            "required": true
+        },
+        {
+            "description": "OpenShift username",
+            "name": "CHE_OPENSHIFT_USERNAME",
+            "value": "openshift-dev",
+            "required": true
+        },
+        {
+            "description": "OpenShift userpassword.",
+            "name": "CHE_OPENSHIFT_PASSWORD",
+            "value": "devel",
+            "required": true
+        },
+        {
+            "description": "OpenShift project.",
+            "name": "CHE_OPENSHIFT_PROJECT",
+            "value": "eclipse-che",
+            "required": true
+        },
+        {
+            "description": "OpenShift service account name.",
+            "name": "CHE_OPENSHIFT_SERVICEACCOUNTNAME",
+            "value": "cheserviceaccount",
+            "required": true
+        },
+        {
+            "description": "Che log level (INFO or DEBUG)",
+            "name": "CHE_LOG_LEVEL",
+            "value": "INFO",
+            "required": false
         },
         {
             "description": "IP of the host docker0 bridge. This IP is used by che-server to communicate with che workspaces",
@@ -145,7 +181,7 @@
                                 "volumeMounts": [
                                     {
                                         "name": "che-conf-volume",
-                                        "mountPath": "/etc/conf",
+                                        "mountPath": "/conf",
                                         "readOnly": false
                                     },
                                     {
@@ -154,16 +190,8 @@
                                         "readOnly": false
                                     },
                                     {
-                                        "name": "che-lib-volume",
-                                        "mountPath": "/home/user/che/lib-copy"
-                                    },
-                                    {
-                                        "name": "che-workspaces-volume",
-                                        "mountPath": "/home/user/che/workspaces"
-                                    },
-                                    {
-                                        "name": "che-storage-volume",
-                                        "mountPath": "/home/user/che/storage"
+                                        "name": "che-data-volume",
+                                        "mountPath": "/data"
                                     }
                                 ],
                                 "ports": [
@@ -188,15 +216,38 @@
                                     },
                                     {
                                         "name": "CHE_LOCAL_CONF_DIR",
-                                        "value": "/conf"
+                                        "value": "/etc/conf"
+                                    },
+                                    {
+                                        "name": "CHE_OPENSHIFT_ENDPOINT",
+                                        "value": "${CHE_OPENSHIFT_ENDPOINT}"
+                                    },
+                                    {
+                                        "name": "CHE_OPENSHIFT_USERNAME",
+                                        "value": "${CHE_OPENSHIFT_USERNAME}"
+                                    },
+                                    {
+                                        "name": "CHE_OPENSHIFT_PASSWORD",
+                                        "value": "${CHE_OPENSHIFT_PASSWORD}"
+                                    },
+                                    {
+                                        "name": "CHE_OPENSHIFT_PROJECT",
+                                        "value": "${CHE_OPENSHIFT_PROJECT}"
+                                    },
+                                    {
+                                        "name": "CHE_OPENSHIFT_SERVICEACCOUNTNAME",
+                                        "value": "${CHE_OPENSHIFT_SERVICEACCOUNTNAME}"
+                                    },
+                                    {
+                                        "name": "CHE_IP",
+                                        "value": "${DOCKER0_BRIDGE_IP}"
+                                    },
+                                    {
+                                        "name": "CHE_LOG_LEVEL",
+                                        "value": "${CHE_LOG_LEVEL}"
                                     }
                                 ],
-                                "args": [
-                                        "--remote:${DOCKER0_BRIDGE_IP}",
-                                        "-s:uid",
-                                        "-s:client",
-                                        "run"
-                                ],
+                                "args": [],
                                 "securityContext": {
                                         "privileged": true,
                                         "runAsUser": 0
@@ -217,25 +268,13 @@
                                 }
                             },
                             {
-                                "name": "che-lib-volume",
+                                "name": "che-data-volume",
                                 "hostPath": {
-                                    "path": "/home/user/che/lib"
-                                }
-                            },
-                            {
-                                "name": "che-workspaces-volume",
-                                "hostPath": {
-                                    "path": "/home/user/che/workspaces"
-                                }
-                            },
-                            {
-                                "name": "che-storage-volume",
-                                "hostPath": {
-                                    "path": "/home/user/che/storage"
+                                    "path": "/home/user/che"
                                 }
                             }
                         ],
-                        "serviceAccountName": "cheserviceaccount"
+                        "serviceAccountName": "${CHE_OPENSHIFT_SERVICEACCOUNTNAME}"
                     }
                 }
             }
