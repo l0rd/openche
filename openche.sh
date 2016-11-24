@@ -41,6 +41,9 @@ set_parameters() {
     CHE_HOSTNAME=${CHE_HOSTNAME:-${DEFAULT_CHE_HOSTNAME}}
     CHE_IMAGE=${CHE_IMAGE:-${DEFAULT_CHE_IMAGE}}
     CHE_LOG_LEVEL=${CHE_LOG_LEVEL:-${DEFAULT_CHE_LOG_LEVEL}}
+
+    DEFAULT_CHE_OPENSHIFT_ENDPOINT=https://${CHE_HOSTNAME}:8443/
+    CHE_OPENSHIFT_ENDPOINT=${CHE_OPENSHIFT_ENDPOINT:-${DEFAULT_CHE_OPENSHIFT_ENDPOINT}}
 }
 
 check_prerequisites() {
@@ -88,7 +91,8 @@ deploy() {
     oc new-app --template=eclipse-che --param=HOSTNAME_HTTP=${CHE_HOSTNAME} \
                                     --param=CHE_SERVER_DOCKER_IMAGE=${CHE_IMAGE} \
                                     --param=DOCKER0_BRIDGE_IP=${DOCKER0_IP} \
-                                    --param=CHE_LOG_LEVEL=${CHE_LOG_LEVEL}
+                                    --param=CHE_LOG_LEVEL=${CHE_LOG_LEVEL} \
+                                    --param=CHE_OPENSHIFT_ENDPOINT=${CHE_OPENSHIFT_ENDPOINT}
     oc deploy che-host --latest
     echo "OPENCHE: Waiting 5 seconds for the app to start"
     sleep 5

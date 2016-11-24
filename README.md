@@ -1,7 +1,66 @@
 # openche
 Scripts, patchs and templates to run Eclipse Che on OpenShift
 
-## Deployment of Che on Minishift
+## Deploy Che on che.ci.centos.org
+
+1\. Build openshift-connector branch of Che (optional)
+
+```sh
+# Get the source code 
+git clone https://github.com/l0rd/che.git
+cd che
+git checkout openshift-connector
+
+# Install pre-requisites (CentOS)
+yum -y update
+yum -y install centos-release-scl  java-1.8.0-openjdk-devel  git  patch
+yum -y install rh-maven33 rh-nodejs4
+
+source scl_source enable rh-maven33 rh-nodejs4
+ 
+# Build Che 
+export NPM_CONFIG_PREFIX=~/.node_modules
+export PATH=$NPM_CONFIG_PREFIX/bin:$PATH
+npm install -g bower gulp typings
+mvn clean install -Pfast
+
+# Build docker image and push it to a registry
+docker build -t mariolet/che-server:openshiftconnector .
+docke push mariolet/che-server:openshiftconnector
+```
+
+2\. Configure OpenShift
+
+```sh
+# Create OpenShift project
+oc login -u openshift-dev -p devel che.ci.centos.org
+oc new-project eclipse-che
+
+# Create a serviceaccount with privileged scc
+oc login -u admin -p admin che.ci.centos.org
+oc create serviceaccount cheserviceaccount
+oc adm policy add-scc-to-user privileged -z cheserviceaccount
+```
+
+3\. Deploy Che
+
+```sh
+# Get the script from github
+git clone https://github.com/l0rd/openche
+# Prepare the environment
+oc login -u openshift-dev -p devel che.ci.centos.org
+export CHE_HOSTNAME=che.ci.centos.org
+export CHE_IMAGE=mariolet/che-server:openshiftconnector
+export DOCKER0_IP=10.1.0.1
+export CHE_LOG_LEVEL=DEBUG
+# Run the script
+cd openche
+./openche.sh deploy
+```
+Once the pod is successfully started Che dashboard should be now available at http://che.ci.centos.org/
+
+
+## Deployment Che on Minishift
 
 1\. Get [minishift](https://github.com/minishift/minishift#installation), create an OpenShift cluster (`minishift start`), open the web console (`minishift console`) and read the instructions to install the OpenShift CLI (help->Command Line Tools).
 
@@ -103,3 +162,4 @@ cd openche
 ./openche.sh deploy
 ```
 Once the pod is successfully started Che dashboard should be now available at http://che.openshift.adb/
+
