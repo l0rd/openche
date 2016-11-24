@@ -36,7 +36,7 @@
         {
             "description": "Url of the OpenShift API",
             "name": "CHE_OPENSHIFT_ENDPOINT",
-            "value": "https://192.168.64.2:8443/",
+            "value": "",
             "required": true
         },
         {
