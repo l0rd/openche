@@ -33,11 +33,11 @@ docke push mariolet/che-server:openshiftconnector
 
 ```sh
 # Create OpenShift project
-oc login -u openshift-dev -p devel che.ci.centos.org
+oc login -u openshift-dev che.ci.centos.org
 oc new-project eclipse-che
 
 # Create a serviceaccount with privileged scc
-oc login -u admin -p admin che.ci.centos.org
+oc login -u system:admin -n eclipse-che
 oc create serviceaccount cheserviceaccount
 oc adm policy add-scc-to-user privileged -z cheserviceaccount
 ```
@@ -48,7 +48,7 @@ oc adm policy add-scc-to-user privileged -z cheserviceaccount
 # Get the script from github
 git clone https://github.com/l0rd/openche
 # Prepare the environment
-oc login -u openshift-dev -p devel che.ci.centos.org
+oc login -u openshift-dev che.ci.centos.org
 export CHE_HOSTNAME=che.ci.centos.org
 export CHE_IMAGE=mariolet/che-server:openshiftconnector
 export DOCKER0_IP=10.1.0.1
