@@ -75,12 +75,8 @@ Once the pod is successfully started Che dashboard should be now available at ht
 3\. Configure OpenShift
 
 ```sh
-# Create a serviceaccount with privileged scc
-oc login -u admin -p admin
-oc create serviceaccount cheserviceaccount
-oc adm policy add-scc-to-user privileged -z cheserviceaccount
-
 # Enable OpenShift router
+oc login -u admin -p admin -n default
 docker pull openshift/origin-haproxy-router:`oc version | awk '{ print $2; exit }'`
 oc adm policy add-scc-to-user hostnetwork -z router
 oc adm router --create --service-account=router --expose-metrics --subdomain="openshift.mini"
@@ -88,6 +84,11 @@ oc adm router --create --service-account=router --expose-metrics --subdomain="op
 # Create OpenShift project
 oc login -u openshift-dev -p devel
 oc new-project eclipse-che
+
+# Create a serviceaccount with privileged scc
+oc login -u admin -p admin -n eclipse-che
+oc create serviceaccount cheserviceaccount
+oc adm policy add-scc-to-user privileged -z cheserviceaccount
 ```
 
 4\. Update `/etc/hosts` with a line that associates minishift IP address (`minishift ip`) and the hostname `che.openshift.mini`
@@ -150,7 +151,7 @@ oc login -u openshift-dev -p devel
 oc new-project eclipse-che
 
 # Create a serviceaccount with privileged scc
-oc login -u admin -p admin
+oc login -u admin -p admin -n eclipse-che
 oc create serviceaccount cheserviceaccount
 oc adm policy add-scc-to-user privileged -z cheserviceaccount
 ```
