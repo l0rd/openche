@@ -3,7 +3,11 @@ Scripts, patchs and templates to run Eclipse Che on OpenShift
 
 ## Deploy Che on che.ci.centos.org
 
-1\. Build openshift-connector branch of Che (optional)
+1\. [Optional] Build Che (`openshift-connector` branch) 
+
+This step is optional: the Docker image is already built and available on Docker Hub `mariolet/che-server:openshiftconnector`.
+
+Instructions to build the image:
 
 ```sh
 # Get the source code 
@@ -47,14 +51,16 @@ oc adm policy add-scc-to-user privileged -z cheserviceaccount
 ```sh
 # Get the script from github
 git clone https://github.com/l0rd/openche
+cd openche
 # Prepare the environment
 oc login -u openshift-dev che.ci.centos.org
 export CHE_HOSTNAME=che.ci.centos.org
 export CHE_IMAGE=mariolet/che-server:openshiftconnector
 export DOCKER0_IP=10.1.0.1
 export CHE_LOG_LEVEL=DEBUG
-# Run the script
-cd openche
+# If a previous version of Che was deployed, delete it
+./openche.sh delete
+# Install OpenShift Che templat eand deploy Che 
 ./openche.sh deploy
 ```
 Once the pod is successfully started Che dashboard should be now available at http://che.ci.centos.org/
@@ -91,14 +97,16 @@ oc new-project eclipse-che
 ```sh
 # Get the script from github
 git clone https://github.com/l0rd/openche
+cd openche
 # Prepare the environment
 oc login -u openshift-dev -p devel
 export CHE_HOSTNAME=che.openshift.mini
 export CHE_IMAGE=codenvy/che-server:5.0.0-latest
 export DOCKER0_IP=$(docker run -ti --rm --net=host alpine ip addr show docker0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
 docker pull $CHE_IMAGE
-# Run the script
-cd openche
+# If a previous version of Che was deployed, delete it
+./openche.sh delete
+# Install OpenShift Che templat eand deploy Che 
 ./openche.sh deploy
 ```
 Once the pod is successfully started Che dashboard should be now available on the minishift console.
@@ -152,13 +160,15 @@ oc adm policy add-scc-to-user privileged -z cheserviceaccount
 ```sh
 # Get the script from github
 git clone https://github.com/l0rd/openche
+cd openche
 # Prepare the environment
 oc login -u openshift-dev -p devel
 export CHE_HOSTNAME=che.openshift.adb
 export CHE_IMAGE=codenvy/che-server:5.0.0-latest
 docker pull $CHE_IMAGE
-# Run the script
-cd openche
+# If a previous version of Che was deployed, delete it
+./openche.sh delete
+# Install OpenShift Che templat eand deploy Che 
 ./openche.sh deploy
 ```
 Once the pod is successfully started Che dashboard should be now available at http://che.openshift.adb/
