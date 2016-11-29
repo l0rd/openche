@@ -102,8 +102,9 @@ cd openche
 # Prepare the environment
 oc login -u openshift-dev -p devel
 export CHE_HOSTNAME=che.openshift.mini
-export CHE_IMAGE=codenvy/che-server:5.0.0-latest
+export CHE_IMAGE=mariolet/che-server:openshiftconnector
 export DOCKER0_IP=$(docker run -ti --rm --net=host alpine ip addr show docker0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
+export CHE_OPENSHIFT_ENDPOINT=https://$(minishift ip):8443
 docker pull $CHE_IMAGE
 # If a previous version of Che was deployed, delete it
 ./openche.sh delete
@@ -112,7 +113,7 @@ docker pull $CHE_IMAGE
 ```
 Once the pod is successfully started Che dashboard should be now available on the minishift console.
 
-## Deployment of Che on ADB 
+## Deployment of Che on ADB (deprecated, use minishift instead)
 
 1\. Get the [atomic developer bundle](https://github.com/projectatomic/adb-atomic-developer-bundle#how-do-i-install-and-run-adb)
 

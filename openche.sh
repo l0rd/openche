@@ -34,9 +34,11 @@
 
 
 set_parameters() {
+    echo "Setting parameters"
     DEFAULT_CHE_HOSTNAME=che.openshift.adb
     DEFAULT_CHE_IMAGE=codenvy/che-server:nightly
     DEFAULT_CHE_LOG_LEVEL=DEBUG
+    DEFAULT_CHE_TEMPLATE="./che.json"
 
     CHE_HOSTNAME=${CHE_HOSTNAME:-${DEFAULT_CHE_HOSTNAME}}
     CHE_IMAGE=${CHE_IMAGE:-${DEFAULT_CHE_IMAGE}}
@@ -44,10 +46,11 @@ set_parameters() {
 
     DEFAULT_CHE_OPENSHIFT_ENDPOINT=https://${CHE_HOSTNAME}:8443/
     CHE_OPENSHIFT_ENDPOINT=${CHE_OPENSHIFT_ENDPOINT:-${DEFAULT_CHE_OPENSHIFT_ENDPOINT}}
+    CHE_TEMPLATE=${CHE_TEMPLATE:-${DEFAULT_CHE_TEMPLATE}}
 }
 
 check_prerequisites() {
-    echo "Checking prerequisites - start"
+    echo "Checking prerequisites"
     # oc must be installed
     command -v oc >/dev/null 2>&1 || { echo >&2 "I require oc but it's not installed.  Aborting."; exit 1; }
 
@@ -66,24 +69,24 @@ check_prerequisites() {
     docker create --name openchetest -v /tmp/nonexistingfolder:/tmp:Z docker.io/busybox sh >/dev/null 2>&1 || { echo >&2 "Command 'docker create -v /tmp/nonexistingfolder:/tmp:Z busybox sh' failed. Che won't be able to create workspaces in this conditions. To solve this you can either install the latest docker version or deactivate Docker SELinux option. Aborting."; exit 1; }
     docker rm openchetest >/dev/null 2>&1
 
-    echo "Checking prerequisites - end"
 }
 
 ## Intstall eclipse-che template (download the json file from github if not found locally)
 install_template() {
-    echo "Installing template - start"
-    if [ ! -f ./che.json ]; then
+    echo "Installing template"
+    if [ ! -f ${CHE_TEMPLATE} ]; then
         echo "Template not found locally. Downloading from internet"
         TEMPLATE_URL=https://raw.githubusercontent.com/l0rd/openche/master/che.json
-        curl -sSL ${TEMPLATE_URL} > che.json
+        curl -sSL ${TEMPLATE_URL} > ${CHE_TEMPLATE}
         echo "${TEMPLATE_URL} downladed"
     fi
-    oc create -f che.json >/dev/null 2>&1 || oc replace -f che.json >/dev/null 2>&1
+    oc create -f ${CHE_TEMPLATE} >/dev/null 2>&1 || oc replace -f ${CHE_TEMPLATE} >/dev/null 2>&1
     echo "Template installed"
 }
 
 ## Create a new app based on `eclipse_che` template and deploy it
 deploy() {
+    echo "Deploying Che"
     if [ -z ${DOCKER0_IP+x} ]; then 
       DOCKER0_IP=$(ip addr show docker0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
     fi
@@ -94,19 +97,20 @@ deploy() {
                                     --param=CHE_LOG_LEVEL=${CHE_LOG_LEVEL} \
                                     --param=CHE_OPENSHIFT_ENDPOINT=${CHE_OPENSHIFT_ENDPOINT}
     oc deploy che-host --latest
-    echo "OPENCHE: Waiting 5 seconds for the app to start"
+    echo "OPENCHE: Waiting 5 seconds for the pod to start"
     sleep 5
-    POD_ID=$(oc get pods | grep che-host | grep -v che-host-deploy | awk '{print $1}')
+    POD_ID=$(oc get pods | grep che-host | grep -v "\-deploy" | awk '{print $1}')
     echo "Che pod starting (id $POD_ID)..."
 }
 
 ## Uninstall everything
 delete() {
+    echo "Deleting resources"
     # POD_ID=$(oc get pods | grep che-host | awk '{print $1}')
     # oc delete pod/${POD_ID}
-    oc delete route/che-host
-    oc delete svc/che-host
-    oc delete dc/che-host
+    oc delete route/che-host || true
+    oc delete svc/che-host || true
+    oc delete dc/che-host || true
 }
 
 parse_command_line () {
