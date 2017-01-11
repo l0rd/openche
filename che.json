@@ -42,13 +42,13 @@
         {
             "description": "OpenShift username",
             "name": "CHE_OPENSHIFT_USERNAME",
-            "value": "openshift-dev",
+            "value": "developer",
             "required": true
         },
         {
             "description": "OpenShift userpassword.",
             "name": "CHE_OPENSHIFT_PASSWORD",
-            "value": "devel",
+            "value": "developer",
             "required": true
         },
         {
@@ -257,8 +257,8 @@
                         "volumes": [
                             {
                                 "name": "che-conf-volume",
-                                "hostPath": {
-                                    "path": "/etc/conf"
+                                "persistentVolumeClaim": {
+                                    "claimName": "claim-che-conf"
                                 }
                             },
                             {
@@ -269,8 +269,8 @@
                             },
                             {
                                 "name": "che-data-volume",
-                                "hostPath": {
-                                    "path": "/home/user/che"
+                                "persistentVolumeClaim": {
+                                    "claimName": "claim-che-data"
                                 }
                             }
                         ],
